@@ -1,0 +1,24 @@
+{
+  "name": "sart-vigilance",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.2",
+    "vite": "^8.0.12"
+  },
+  "dependencies": {
+    "@jspsych/plugin-html-button-response": "^2.1.0",
+    "@jspsych/plugin-html-keyboard-response": "^2.1.0",
+    "@jspsych/plugin-preload": "^2.1.0",
+    "@jspsych/plugin-survey": "^4.0.0",
+    "@jspsych/plugin-survey-likert": "^2.2.0",
+    "@supabase/supabase-js": "^2.106.1",
+    "jspsych": "^8.2.3"
+  }
+}
