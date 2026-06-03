@@ -92,11 +92,13 @@ export function buildConsentFormTrial(
                 <span>${item}</span>
               </label>
             `).join('')}
+            <p class="cf-field-error" id="cf-error-items" hidden>すべての項目にチェックを入れてください</p>
           </div>
           <div class="cf-fields">
             <div class="cf-field-row">
               <label class="cf-field-label">フリガナ（必須）</label>
               <input type="text" id="cf-furigana" class="cf-input" placeholder="ヤマダ タロウ">
+              <p class="cf-field-error" id="cf-error-furigana" hidden>フリガナを入力してください</p>
             </div>
             <div class="cf-field-row">
               <label class="cf-field-label">年齢（必須）</label>
@@ -104,6 +106,7 @@ export function buildConsentFormTrial(
                 <input type="number" id="cf-age" class="cf-input cf-input-sm" min="18" max="99" placeholder="22">
                 <span>歳</span>
               </div>
+              <p class="cf-field-error" id="cf-error-age" hidden>年齢を入力してください</p>
             </div>
             <div class="cf-field-row">
               <label class="cf-field-label">性別（必須）</label>
@@ -114,14 +117,17 @@ export function buildConsentFormTrial(
                 <option value="other">その他</option>
                 <option value="no_answer">回答しない</option>
               </select>
+              <p class="cf-field-error" id="cf-error-gender" hidden>性別を選択してください</p>
             </div>
             <div class="cf-field-row">
               <label class="cf-field-label">署名（必須：お名前を入力してください）</label>
               <input type="text" id="cf-signature" class="cf-input" placeholder="山田 太郎">
+              <p class="cf-field-error" id="cf-error-signature" hidden>署名（お名前）を入力してください</p>
             </div>
             <div class="cf-field-row">
               <label class="cf-field-label">Email（必須）</label>
               <input type="email" id="cf-email" class="cf-input" placeholder="example@email.com">
+              <p class="cf-field-error" id="cf-error-email" hidden>正しいメールアドレスを入力してください</p>
             </div>
             <div class="cf-field-row cf-field-date-row">
               <span class="cf-field-label">署名日</span>
@@ -137,26 +143,52 @@ export function buildConsentFormTrial(
     on_load: () => {
       const btn = document.getElementById('cf-submit-btn') as HTMLButtonElement;
 
+      const touched: Record<string, boolean> = {
+        items: false, furigana: false, age: false, gender: false, signature: false, email: false,
+      };
+
+      function setError(id: string, message: string | null) {
+        const errEl = document.getElementById(`cf-error-${id}`);
+        const inputEl = document.getElementById(`cf-${id}`);
+        if (errEl) {
+          (errEl as HTMLElement).hidden = !message;
+          if (message) errEl.textContent = message;
+        }
+        inputEl?.classList.toggle('cf-input-error', !!message);
+      }
+
       function validate() {
         const allChecked = Array.from(
           document.querySelectorAll<HTMLInputElement>('.cf-item'),
         ).every(cb => cb.checked);
         const furigana = (document.getElementById('cf-furigana') as HTMLInputElement).value.trim();
-        const age = parseInt((document.getElementById('cf-age') as HTMLInputElement).value, 10);
+        const ageRaw = (document.getElementById('cf-age') as HTMLInputElement).value;
+        const age = parseInt(ageRaw, 10);
         const gender = (document.getElementById('cf-gender') as HTMLSelectElement).value;
         const signature = (document.getElementById('cf-signature') as HTMLInputElement).value.trim();
         const email = (document.getElementById('cf-email') as HTMLInputElement).value.trim();
         const emailOk = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(email);
 
+        if (touched.items)     setError('items',     allChecked ? null : 'すべての項目にチェックを入れてください');
+        if (touched.furigana)  setError('furigana',  furigana ? null : 'フリガナを入力してください');
+        if (touched.age)       setError('age',       !ageRaw ? '年齢を入力してください' : age < 18 ? '18歳以上の方が参加対象です' : null);
+        if (touched.gender)    setError('gender',    gender ? null : '性別を選択してください');
+        if (touched.signature) setError('signature', signature ? null : '署名（お名前）を入力してください');
+        if (touched.email)     setError('email',     emailOk ? null : '正しいメールアドレスを入力してください');
+
         btn.disabled = !(allChecked && furigana && age >= 18 && gender && signature && emailOk);
       }
 
-      document
-        .querySelectorAll('.cf-item, #cf-furigana, #cf-age, #cf-gender, #cf-signature, #cf-email')
-        .forEach(el => el.addEventListener('input', validate));
-      document
-        .querySelectorAll('.cf-item')
-        .forEach(el => el.addEventListener('change', validate));
+      for (const field of ['furigana', 'age', 'gender', 'signature', 'email']) {
+        const el = document.getElementById(`cf-${field}`)!;
+        el.addEventListener('blur',   () => { touched[field] = true; validate(); });
+        el.addEventListener('input',  () => validate());
+        el.addEventListener('change', () => { touched[field] = true; validate(); });
+      }
+
+      document.querySelectorAll<HTMLInputElement>('.cf-item').forEach(cb => {
+        cb.addEventListener('change', () => { touched.items = true; validate(); });
+      });
 
       // jsPsych が DOM を消す前に値を退避（capture フェーズで先に実行）
       btn.addEventListener('click', () => {

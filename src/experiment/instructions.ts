@@ -20,13 +20,13 @@ export function buildInstructionTrials(condition: Condition) {
             数字を見て、以下のルールに従ってできるだけ <strong>速く・正確に</strong> 反応してください。
           </p>
           <div class="instruction-rule">
-            <div class="rule-box rule-go">
+            <div class="rule-box">
               <div class="rule-digit">5</div>
               <p class="rule-desc">「3」<strong>以外</strong>の数字が出たとき</p>
               <p class="rule-action"><kbd>スペースキー</kbd> を押す</p>
             </div>
-            <div class="rule-box rule-nogo">
-              <div class="rule-digit target">3</div>
+            <div class="rule-box">
+              <div class="rule-digit">3</div>
               <p class="rule-desc">「3」が出たとき</p>
               <p class="rule-action"><strong>何も押さない</strong></p>
             </div>
@@ -38,7 +38,7 @@ export function buildInstructionTrials(condition: Condition) {
             </section>
             <section class="consent-section">
               <h3>よくある間違い</h3>
-              <p>「3」が出たときに思わずキーを押してしまう（抑制できない）ことが最もよくある誤りです。「3」が見えたら <strong>意識的に手を止めて</strong> ください。</p>
+              <p>「3」が出たときに思わずキーを押してしまう（抑制できない）ことが最もよくある誤りです。<br>「3」が見えたら <strong>意識的に手を止めて</strong> ください。</p>
             </section>
           </div>
         </div>

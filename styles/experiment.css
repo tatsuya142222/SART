@@ -277,6 +277,21 @@
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
 }
 
+.cf-input-error {
+  border-color: #dc2626 !important;
+}
+
+.cf-input-error:focus {
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.15) !important;
+}
+
+.cf-field-error {
+  font-size: 0.8125rem;
+  color: #dc2626;
+  font-weight: 500;
+  margin: 0.2rem 0 0;
+}
+
 .cf-input-sm {
   width: 80px;
 }
@@ -411,30 +426,29 @@
 .instruction-rule {
   display: flex;
   justify-content: center;
-  gap: 40px;
-  margin: 24px 0;
+  gap: 0;
+  margin: 1.5rem 0;
 }
 
 .rule-box {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 20px;
-  border-radius: 12px;
+  gap: 10px;
+  padding: 0.5rem 3rem;
   min-width: 180px;
 }
 
-.rule-go   { background: #eff6ff; border: 2px solid #2563eb; }
-.rule-nogo { background: #fef2f2; border: 2px solid #dc2626; }
-
-.rule-digit {
-  font-size: 72px;
-  font-weight: bold;
-  line-height: 1;
+.rule-box:first-child {
+  border-right: 1px solid #e5e7eb;
 }
 
-.rule-digit.target { color: #dc2626; }
+.rule-digit {
+  font-size: 64px;
+  font-weight: bold;
+  line-height: 1;
+  color: #1a1a1a;
+}
 
 .rule-box p {
   font-size: 14px;
