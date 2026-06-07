@@ -3,7 +3,7 @@ import htmlButtonResponse from '@jspsych/plugin-html-button-response';
 import { IMI_ITEMS, NASA_TLX_ITEMS } from '../config/experiment';
 import type { QuestionnaireResponse } from '../types';
 
-export function buildImiTrial(getParticipantId: () => string, collectedResponses: QuestionnaireResponse[]) {
+export function buildImiTrial(getParticipantId: () => string, getParticipantCode: () => string, collectedResponses: QuestionnaireResponse[]) {
   return {
     type: surveyLikert,
     questions: IMI_ITEMS.map(item => ({
@@ -20,6 +20,7 @@ export function buildImiTrial(getParticipantId: () => string, collectedResponses
         const score = item.reversed ? 8 - rawScore : rawScore;
         collectedResponses.push({
           participant_id: getParticipantId(),
+          participant_code: getParticipantCode(),
           questionnaire_type: 'IMI',
           item_code: item.code,
           score,
@@ -29,7 +30,7 @@ export function buildImiTrial(getParticipantId: () => string, collectedResponses
   };
 }
 
-export function buildNasaTlxTrial(getParticipantId: () => string, collectedResponses: QuestionnaireResponse[]) {
+export function buildNasaTlxTrial(getParticipantId: () => string, getParticipantCode: () => string, collectedResponses: QuestionnaireResponse[]) {
   const sliderHtml = NASA_TLX_ITEMS.map(item => `
     <div class="nasa-item">
       <div class="nasa-label">${item.label}</div>
@@ -68,6 +69,7 @@ export function buildNasaTlxTrial(getParticipantId: () => string, collectedRespo
         const score = slider ? parseInt(slider.value, 10) : 50;
         collectedResponses.push({
           participant_id: getParticipantId(),
+          participant_code: getParticipantCode(),
           questionnaire_type: 'NASA-TLX',
           item_code: item.code,
           score,

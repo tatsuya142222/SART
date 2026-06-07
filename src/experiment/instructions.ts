@@ -100,33 +100,40 @@ export function buildInstructionTrials(condition: Condition) {
     css_classes: 'trial-consent',
     stimulus: `
       <div class="consent-container">
-        <h2>ポイントシステムについて</h2>
+        <h2>フィードバックについて</h2>
         <div class="consent-body">
           <p class="instr-intro">
-            正しく反応するたびにポイントが加算されます。<br>
-            できるだけ多くのポイントを獲得することを目指してください！
+            各試行の後に結果が表示され、連続成功数が画面に表示されます。<br>
+            何問連続で正解できるか挑戦してください！
           </p>
           <div class="consent-sections">
             <section class="consent-section">
-              <h3><span class="badge badge-fast">Fast</span>　反応時間が 400ms 未満</h3>
-              <p>非常に素早く反応できた場合に表示されます。<strong>+10 ポイント</strong></p>
+              <h3><span class="badge badge-excellent">Excellent!!</span>　反応時間が 300ms 未満</h3>
+              <p>非常に素早く反応できた場合に表示されます。</p>
+            </section>
+            <section class="consent-section">
+              <h3><span class="badge badge-fast">Fast</span>　反応時間が 300〜400ms</h3>
+              <p>素早く反応できた場合に表示されます。</p>
             </section>
             <section class="consent-section">
               <h3><span class="badge badge-good">Good</span>　反応時間が 400〜700ms</h3>
-              <p>速すぎず遅すぎない、安定した反応ができた場合に表示されます。<strong>+10 ポイント</strong></p>
+              <p>速すぎず遅すぎない、安定した反応ができた場合に表示されます。</p>
             </section>
             <section class="consent-section">
               <h3><span class="badge badge-slow">Slow</span>　反応時間が 700ms 超</h3>
-              <p>反応はできているものの、やや遅れた場合に表示されます。<strong>+10 ポイント</strong></p>
+              <p>反応はできているものの、やや遅れた場合に表示されます。</p>
             </section>
             <section class="consent-section">
-              <h3><span class="badge badge-inhibit">✓ 抑制成功</span>　「3」を正しく抑制</h3>
-              <p>「3」が出たときにキーを押さずに我慢できた場合に表示されます。<strong>+10 ポイント</strong></p>
+              <h3><span class="badge badge-inhibit">✓</span>　「3」を正しく抑制</h3>
+              <p>「3」が出たときにキーを押さずに我慢できた場合に表示されます。</p>
+            </section>
+            <section class="consent-section">
+              <h3><span class="badge badge-error">Miss</span>　誤反応</h3>
+              <p>「3」でキーを押してしまった、または「3」以外で押せなかった場合に表示されます。連続記録はリセットされます。</p>
             </section>
           </div>
           <div class="instr-callout">
-            ❌ 誤反応（「3」でキーを押す・「3」以外で押さない）はポイントになりません。<br>
-            画面上部のバーに現在の得点と進捗が常に表示されます。
+            連続成功数は各ブロック開始時にリセットされます。
           </div>
         </div>
       </div>

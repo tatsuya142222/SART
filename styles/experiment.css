@@ -425,18 +425,20 @@
 
 .instruction-rule {
   display: flex;
-  justify-content: center;
   gap: 0;
-  margin: 1.5rem 0;
+  margin: 1.5rem auto;
+  max-width: 540px;
+  width: 100%;
 }
 
 .rule-box {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
   padding: 0.5rem 3rem;
-  min-width: 180px;
 }
 
 .rule-box:first-child {
@@ -519,10 +521,12 @@
   text-align: center;
 }
 
-.badge-fast    { background: #d1fae5; color: #065f46; }
-.badge-good    { background: #fef3c7; color: #92400e; }
-.badge-slow    { background: #fee2e2; color: #991b1b; }
-.badge-inhibit { background: #e0e7ff; color: #3730a3; }
+.badge-excellent { background: #ede9fe; color: #5b21b6; }
+.badge-fast      { background: #d1fae5; color: #065f46; }
+.badge-good      { background: #fef3c7; color: #92400e; }
+.badge-slow      { background: #fee2e2; color: #991b1b; }
+.badge-inhibit   { background: #e0e7ff; color: #3730a3; }
+.badge-error     { background: #fee2e2; color: #991b1b; }
 
 /* 実験刺激 */
 .fixation {
@@ -620,6 +624,27 @@
   min-width: 32px;
   text-align: right;
   color: #2563eb;
+}
+
+/* IMI ラジオボタンを大きく・押しやすく */
+.jspsych-survey-likert-opts li input[type=radio] {
+  width: 26px !important;
+  height: 26px !important;
+  display: block !important;
+  position: static !important;
+  left: auto !important;
+  margin: 0 auto 6px !important;
+  cursor: pointer;
+  accent-color: #2563eb;
+}
+
+.jspsych-survey-likert-opt-label {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  padding: 10px 4px !important;
+  cursor: pointer;
+  line-height: 1.4 !important;
 }
 
 /* 終了画面 */

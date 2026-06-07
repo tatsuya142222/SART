@@ -3,7 +3,7 @@ import htmlButtonResponse from '@jspsych/plugin-html-button-response';
 import type { JsPsych } from 'jspsych';
 import { EXPERIMENT_CONFIG } from '../config/experiment';
 import type { Condition, TrialData, TrialType } from '../types';
-import { calcFeedback, createGamificationState, updatePoints } from '../gamification/state';
+import { calcFeedback, createGamificationState, updateStreak } from '../gamification/state';
 import { mountHud, unmountHud, updateHud } from '../gamification/hud';
 import { mountOverlay, unmountOverlay, showFeedback } from '../gamification/overlay';
 
@@ -31,6 +31,7 @@ function generateTrialSequence(totalTrials: number, numTargets: number): number[
 export function buildSartBlock(
   jsPsych: JsPsych,
   getParticipantId: () => string,
+  getParticipantCode: () => string,
   condition: Condition,
   blockNumber: number,
   trialType: TrialType,
@@ -44,8 +45,12 @@ export function buildSartBlock(
     : EXPERIMENT_CONFIG.TARGETS_PER_BLOCK;
 
   const digits = generateTrialSequence(totalTrials, numTargets);
-  const gamState = createGamificationState(totalTrials);
+  const gamState = createGamificationState();
   let gamStateRef = gamState;
+
+  let stimulusStartTime = 0;
+  let feedbackShownThisTrial = false;
+  let keydownHandler: ((e: KeyboardEvent) => void) | null = null;
 
   const trials: object[] = [];
 
@@ -83,6 +88,23 @@ export function buildSartBlock(
       choices: [' '],
       trial_duration: EXPERIMENT_CONFIG.STIMULUS_DURATION,
       response_ends_trial: false,
+      on_start: () => {
+        stimulusStartTime = performance.now();
+        feedbackShownThisTrial = false;
+        if (condition === 'B') {
+          keydownHandler = (e: KeyboardEvent) => {
+            if (e.code !== 'Space' || feedbackShownThisTrial) return;
+            feedbackShownThisTrial = true;
+            const rt = Math.round(performance.now() - stimulusStartTime);
+            const correct = !isTarget;
+            const feedback = calcFeedback(isTarget, ' ', rt);
+            gamStateRef = updateStreak(gamStateRef, correct);
+            updateHud(gamStateRef);
+            showFeedback(feedback);
+          };
+          document.addEventListener('keydown', keydownHandler);
+        }
+      },
     });
 
     // マスク（反応収集）
@@ -93,6 +115,11 @@ export function buildSartBlock(
       trial_duration: EXPERIMENT_CONFIG.MASK_DURATION,
       response_ends_trial: false,
       on_finish: (data: any) => {
+        if (keydownHandler) {
+          document.removeEventListener('keydown', keydownHandler);
+          keydownHandler = null;
+        }
+
         const stimData = jsPsych.data.get().last(2).values()[0];
         const response = (stimData?.response || data?.response) ? ' ' : null;
         const rt = stimData?.rt ?? data?.rt ?? null;
@@ -100,8 +127,9 @@ export function buildSartBlock(
 
         const trialRecord: TrialData = {
           participant_id: getParticipantId(),
+          participant_code: getParticipantCode(),
           block_number: blockNumber,
-          trial_index: i,
+          trial_index: i + 1,
           trial_type: trialType,
           stimulus_digit: digit,
           font_size: fontSize,
@@ -113,9 +141,10 @@ export function buildSartBlock(
         };
         collectedTrials.push(trialRecord);
 
-        if (condition === 'B') {
+        if (condition === 'B' && !feedbackShownThisTrial) {
+          // キー未押下のケース：correct_inhibit または omission（null）のみ
           const feedback = calcFeedback(isTarget, response, rt);
-          gamStateRef = updatePoints(gamStateRef, feedback);
+          gamStateRef = updateStreak(gamStateRef, correct);
           updateHud(gamStateRef);
           showFeedback(feedback);
         }

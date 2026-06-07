@@ -1,6 +1,6 @@
 export type Condition = 'A' | 'B';
 export type TrialType = 'practice' | 'test';
-export type FeedbackType = 'fast' | 'good' | 'slow' | 'commission_error' | 'correct_inhibit' | null;
+export type FeedbackType = 'excellent' | 'fast' | 'good' | 'slow' | 'commission_error' | 'omission_error' | 'correct_inhibit' | null;
 
 export interface Participant {
   id?: string;
@@ -15,6 +15,7 @@ export interface Participant {
 
 export interface TrialData {
   participant_id: string;
+  participant_code: string;
   block_number: number;
   trial_index: number;
   trial_type: TrialType;
@@ -29,6 +30,7 @@ export interface TrialData {
 
 export interface QuestionnaireResponse {
   participant_id: string;
+  participant_code: string;
   questionnaire_type: 'IMI' | 'NASA-TLX';
   item_code: string;
   score: number;

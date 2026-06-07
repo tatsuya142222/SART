@@ -1,11 +1,13 @@
 import type { FeedbackType } from '../types';
 
 const FEEDBACK_CONFIG: Record<NonNullable<FeedbackType>, { label: string; className: string }> = {
-  fast:             { label: 'Fast!   +10 pts',  className: 'feedback-fast' },
-  good:             { label: 'Good!   +10 pts',  className: 'feedback-good' },
-  slow:             { label: 'Slow…   +10 pts',  className: 'feedback-slow' },
-  correct_inhibit:  { label: '✓  +10 pts',        className: 'feedback-inhibit' },
-  commission_error: { label: '✗',                 className: 'feedback-error' },
+  excellent:        { label: 'Excellent!!', className: 'feedback-excellent' },
+  fast:             { label: 'Fast!',       className: 'feedback-fast' },
+  good:             { label: 'Good!',       className: 'feedback-good' },
+  slow:             { label: 'Slow…',       className: 'feedback-slow' },
+  correct_inhibit:  { label: '✓',           className: 'feedback-inhibit' },
+  commission_error: { label: 'Miss',        className: 'feedback-error' },
+  omission_error:   { label: 'Miss',        className: 'feedback-error' },
 };
 
 let overlayEl: HTMLElement | null = null;
@@ -29,7 +31,6 @@ export function showFeedback(feedback: FeedbackType): void {
   overlayEl.textContent = cfg.label;
   overlayEl.className = `feedback-visible ${cfg.className}`;
 
-  // アニメーション終了後に非表示
   overlayEl.addEventListener('animationend', () => {
     if (overlayEl) overlayEl.className = '';
   }, { once: true });

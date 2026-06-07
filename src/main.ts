@@ -4,6 +4,7 @@ import '../styles/base.css';
 import '../styles/experiment.css';
 import '../styles/gamification.css';
 import htmlButtonResponse from '@jspsych/plugin-html-button-response';
+import htmlKeyboardResponse from '@jspsych/plugin-html-keyboard-response';
 import type { Condition, TrialData, QuestionnaireResponse } from './types';
 import { buildConsentTrial, buildConsentFormTrial, buildWithdrawalInfoTrial } from './experiment/consent';
 import { buildInstructionTrials } from './experiment/instructions';
@@ -43,15 +44,6 @@ let participantCode = '';
 // --- jsPsych 初期化 ---
 const jsPsych = initJsPsych({
   display_element: 'jspsych-target',
-  on_finish: async () => {
-    try {
-      await saveTrials(collectedTrials);
-      await saveQuestionnaire(collectedResponses);
-      await markCompleted(participantId);
-    } catch (e) {
-      console.error('データ保存エラー:', e);
-    }
-  },
 });
 
 // --- タイムライン構築 ---
@@ -76,21 +68,35 @@ timeline.push(buildWithdrawalInfoTrial());
 timeline.push(...buildInstructionTrials(condition));
 
 // 練習試行
-timeline.push(...buildSartBlock(jsPsych, () => participantId, condition, 0, 'practice', collectedTrials));
+timeline.push(...buildSartBlock(jsPsych, () => participantId, () => participantCode, condition, 0, 'practice', collectedTrials));
 timeline.push(buildPracticeResultTrial(collectedTrials));
 
 // 本試行（3ブロック）
 for (let block = 1; block <= EXPERIMENT_CONFIG.NUM_BLOCKS; block++) {
   timeline.push(buildBlockStartTrial(block));
-  timeline.push(...buildSartBlock(jsPsych, () => participantId, condition, block, 'test', collectedTrials));
+  timeline.push(...buildSartBlock(jsPsych, () => participantId, () => participantCode, condition, block, 'test', collectedTrials));
   if (block < EXPERIMENT_CONFIG.NUM_BLOCKS) {
     timeline.push(buildBreakTrial(block));
   }
 }
 
 // アンケート
-timeline.push(buildImiTrial(() => participantId, collectedResponses));
-timeline.push(buildNasaTlxTrial(() => participantId, collectedResponses));
+timeline.push(buildImiTrial(() => participantId, () => participantCode, collectedResponses));
+timeline.push(buildNasaTlxTrial(() => participantId, () => participantCode, collectedResponses));
+
+// データ保存（終了画面の直前・fire-and-forget）
+timeline.push({
+  type: htmlKeyboardResponse,
+  stimulus: '',
+  choices: 'NO_KEYS',
+  trial_duration: 0,
+  on_finish: () => {
+    saveTrials(collectedTrials)
+      .then(() => saveQuestionnaire(collectedResponses))
+      .then(() => markCompleted(participantId))
+      .catch(e => console.error('データ保存エラー:', e));
+  },
+});
 
 // 終了画面
 timeline.push({
@@ -102,7 +108,7 @@ timeline.push({
       <p>参加者コード：<strong>${participantCode}</strong></p>
       <p class="end-note">単位申請等で必要な場合はこのコードをメモしてください。</p>
       <hr>
-      <p>ご不明な点は以下までご連絡ください。<br>E-mail: research@example.ac.jp</p>
+      <p>ご不明な点は以下までご連絡ください。<br>E-mail: s2331104LJ@s.chibakoudai.jp</p>
     </div>
   `,
   choices: [],
