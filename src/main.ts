@@ -54,12 +54,57 @@ const timeline: any[] = [];
 timeline.push(buildConsentTrial());
 
 // 同意書フォーム（参加者登録）
+let registrationStatus: 'pending' | 'ok' | 'error' = 'pending';
 timeline.push(
-  buildConsentFormTrial(condition, (id, code) => {
-    participantId = id;
-    participantCode = code;
+  buildConsentFormTrial(condition, (result) => {
+    if (result.ok) {
+      participantId = result.id;
+      participantCode = result.code;
+      registrationStatus = 'ok';
+    } else {
+      registrationStatus = 'error';
+    }
   }),
 );
+
+// 登録完了の確認（参加者登録が完了するまで先へ進ませない）
+// 失敗時はデータ保存先が確定しないため、実験を続行させず再読み込みを促す。
+timeline.push({
+  type: htmlButtonResponse,
+  stimulus: `
+    <div class="instruction-container">
+      <h2>登録処理中</h2>
+      <p>しばらくお待ちください…</p>
+    </div>
+  `,
+  choices: [] as string[],
+  trial_duration: null,
+  on_load: () => {
+    const REG_TIMEOUT_MS = 15000;
+    const start = Date.now();
+    const poll = setInterval(() => {
+      if (registrationStatus === 'ok') {
+        clearInterval(poll);
+        jsPsych.finishTrial();
+      } else if (registrationStatus === 'error' || Date.now() - start > REG_TIMEOUT_MS) {
+        clearInterval(poll);
+        const target = document.getElementById('jspsych-target');
+        if (target) {
+          target.innerHTML = `
+            <div class="instruction-container">
+              <h2>通信エラー</h2>
+              <p>参加者登録に失敗しました。<br>
+              ネットワーク接続を確認のうえ、下のボタンから再読み込みしてください。</p>
+              <button class="jspsych-btn" id="reg-reload">再読み込み</button>
+            </div>
+          `;
+          document.getElementById('reg-reload')
+            ?.addEventListener('click', () => window.location.reload());
+        }
+      }
+    }, 200);
+  },
+});
 
 // 同意撤回・中断案内
 timeline.push(buildWithdrawalInfoTrial());
@@ -67,14 +112,35 @@ timeline.push(buildWithdrawalInfoTrial());
 // 教示
 timeline.push(...buildInstructionTrials(condition));
 
+// ブロックごとの逐次保存（途中離脱でも取得済みデータを失わないため）。
+// collectedTrials のうち未保存分のみを送信し、savedTrialCount で二重送信を防ぐ。
+let savedTrialCount = 0;
+function buildBlockSaveTrial() {
+  return {
+    type: htmlKeyboardResponse,
+    stimulus: '',
+    choices: 'NO_KEYS',
+    trial_duration: 0,
+    on_finish: () => {
+      const pending = collectedTrials.slice(savedTrialCount);
+      savedTrialCount = collectedTrials.length;
+      if (pending.length > 0) {
+        saveTrials(pending).catch(e => console.error('ブロックデータ保存エラー:', e));
+      }
+    },
+  };
+}
+
 // 練習試行
 timeline.push(...buildSartBlock(jsPsych, () => participantId, () => participantCode, condition, 0, 'practice', collectedTrials));
 timeline.push(buildPracticeResultTrial(collectedTrials));
+timeline.push(buildBlockSaveTrial());
 
 // 本試行（3ブロック）
 for (let block = 1; block <= EXPERIMENT_CONFIG.NUM_BLOCKS; block++) {
   timeline.push(buildBlockStartTrial(block));
   timeline.push(...buildSartBlock(jsPsych, () => participantId, () => participantCode, condition, block, 'test', collectedTrials));
+  timeline.push(buildBlockSaveTrial());
   if (block < EXPERIMENT_CONFIG.NUM_BLOCKS) {
     timeline.push(buildBreakTrial(block));
   }
@@ -84,14 +150,19 @@ for (let block = 1; block <= EXPERIMENT_CONFIG.NUM_BLOCKS; block++) {
 timeline.push(buildImiTrial(() => participantId, () => participantCode, collectedResponses));
 timeline.push(buildNasaTlxTrial(() => participantId, () => participantCode, collectedResponses));
 
-// データ保存（終了画面の直前・fire-and-forget）
+// 最終保存（終了画面の直前・fire-and-forget）
+// 試行データはブロックごとに保存済み。ここでは未保存分の念のためのフラッシュと、
+// アンケート保存・完了マークを行う。
 timeline.push({
   type: htmlKeyboardResponse,
   stimulus: '',
   choices: 'NO_KEYS',
   trial_duration: 0,
   on_finish: () => {
-    saveTrials(collectedTrials)
+    const pending = collectedTrials.slice(savedTrialCount);
+    savedTrialCount = collectedTrials.length;
+    Promise.resolve()
+      .then(() => (pending.length > 0 ? saveTrials(pending) : undefined))
       .then(() => saveQuestionnaire(collectedResponses))
       .then(() => markCompleted(participantId))
       .catch(e => console.error('データ保存エラー:', e));

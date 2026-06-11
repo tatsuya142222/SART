@@ -63,9 +63,20 @@ export function buildConsentTrial() {
   };
 }
 
+// 紛らわしい文字(0/O/1/I/L)を除いた読みやすい文字集合から4文字の参加者コードを生成。
+// 36^4 ≈ 160万通りに近い空間で、数十人規模なら衝突はほぼ起きない。
+function generateParticipantCode(condition: Condition): string {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  let suffix = '';
+  for (let i = 0; i < 4; i++) {
+    suffix += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return `${condition}-${suffix}`;
+}
+
 export function buildConsentFormTrial(
   condition: Condition,
-  onCreated: (participantId: string, code: string) => void,
+  onResult: (result: { ok: true; id: string; code: string } | { ok: false }) => void,
 ) {
   const today = new Date().toLocaleDateString('ja-JP', {
     year: 'numeric', month: 'numeric', day: 'numeric',
@@ -204,7 +215,7 @@ export function buildConsentFormTrial(
     on_finish: async () => {
       const { furigana, age, gender, signature, email } = captured;
 
-      const code = `${condition}-${String(Math.floor(Math.random() * 900) + 100)}`;
+      const code = generateParticipantCode(condition);
 
       try {
         const participantId = await createParticipant({
@@ -221,9 +232,10 @@ export function buildConsentFormTrial(
           email,
           signed_at: new Date().toISOString(),
         });
-        onCreated(participantId, code);
+        onResult({ ok: true, id: participantId, code });
       } catch (e) {
         console.error('同意書保存エラー:', e);
+        onResult({ ok: false });
       }
     },
   };

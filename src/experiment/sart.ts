@@ -122,7 +122,11 @@ export function buildSartBlock(
 
         const stimData = jsPsych.data.get().last(2).values()[0];
         const response = (stimData?.response || data?.response) ? ' ' : null;
-        const rt = stimData?.rt ?? data?.rt ?? null;
+        // 刺激中の反応は刺激オンセット基準でそのまま。マスク中の反応はマスクオンセット
+        // 基準なので、刺激表示時間(250ms)を加算して刺激オンセット基準に揃える。
+        const rt = stimData?.rt != null
+          ? stimData.rt
+          : (data?.rt != null ? data.rt + EXPERIMENT_CONFIG.STIMULUS_DURATION : null);
         const correct = isTarget ? response === null : response !== null;
 
         const trialRecord: TrialData = {
@@ -169,30 +173,35 @@ export function buildSartBlock(
 }
 
 export function buildBreakTrial(blockNumber: number) {
+  let timer: ReturnType<typeof setInterval> | null = null;
+  const totalSeconds = EXPERIMENT_CONFIG.BREAK_DURATION_SECONDS;
   return {
     type: htmlButtonResponse,
-    stimulus: () => {
-      let seconds = EXPERIMENT_CONFIG.BREAK_DURATION_SECONDS;
-      const container = `
-        <div class="break-container">
-          <h2>休憩</h2>
-          <p>ブロック ${blockNumber} / ${EXPERIMENT_CONFIG.NUM_BLOCKS} 終了</p>
-          <p class="break-timer" id="break-countdown">${formatTime(seconds)}</p>
-          <p class="break-note">5分後に自動で次へ進みます</p>
-        </div>
-      `;
-      setTimeout(() => {
-        const timer = setInterval(() => {
-          seconds--;
-          const el = document.getElementById('break-countdown');
-          if (el) el.textContent = formatTime(seconds);
-          if (seconds <= 0) clearInterval(timer);
-        }, 1000);
-      }, 100);
-      return container;
-    },
+    stimulus: `
+      <div class="break-container">
+        <h2>休憩</h2>
+        <p>ブロック ${blockNumber} / ${EXPERIMENT_CONFIG.NUM_BLOCKS} 終了</p>
+        <p class="break-timer" id="break-countdown">${formatTime(totalSeconds)}</p>
+        <p class="break-note">${Math.round(totalSeconds / 60)}分後に自動で次へ進みます</p>
+      </div>
+    `,
     choices: ['今すぐ次のブロックを開始する'],
-    trial_duration: EXPERIMENT_CONFIG.BREAK_DURATION_SECONDS * 1000,
+    trial_duration: totalSeconds * 1000,
+    on_load: () => {
+      let seconds = totalSeconds;
+      timer = setInterval(() => {
+        seconds--;
+        const el = document.getElementById('break-countdown');
+        if (el) el.textContent = formatTime(seconds);
+        if (seconds <= 0 && timer) clearInterval(timer);
+      }, 1000);
+    },
+    on_finish: () => {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    },
   };
 }
 
