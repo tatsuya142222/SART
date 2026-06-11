@@ -1,5 +1,5 @@
 // テスト時は true、本番時は false に変更してください
-const TEST_MODE = true;
+const TEST_MODE = false;
 
 export const EXPERIMENT_CONFIG = {
   STIMULUS_DURATION: 250,
